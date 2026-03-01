@@ -184,6 +184,24 @@ export function initializeDatabase() {
       notes TEXT
     );
 
+    CREATE TABLE IF NOT EXISTS schedule_templates (
+      id TEXT PRIMARY KEY,
+      name TEXT NOT NULL,
+      description TEXT,
+      day_type TEXT NOT NULL DEFAULT 'workday',
+      created_at TEXT DEFAULT (datetime('now')),
+      updated_at TEXT DEFAULT (datetime('now'))
+    );
+
+    CREATE TABLE IF NOT EXISTS schedule_template_blocks (
+      id TEXT PRIMARY KEY,
+      template_id TEXT NOT NULL REFERENCES schedule_templates(id) ON DELETE CASCADE,
+      label TEXT NOT NULL,
+      block_type TEXT NOT NULL DEFAULT 'fixed',
+      start_time TEXT NOT NULL,
+      end_time TEXT NOT NULL
+    );
+
     CREATE TABLE IF NOT EXISTS calendar_sync (
       id TEXT PRIMARY KEY,
       google_calendar_id TEXT,

@@ -8,7 +8,14 @@ export function formatMinutes(minutes: number): string {
 
 export function formatTime(isoString: string): string {
   const date = new Date(isoString);
-  return date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+  return date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', hour12: true });
+}
+
+export function formatTimeSlot(slot: string): string {
+  const [h, m] = slot.split(':').map(Number);
+  const ampm = h >= 12 ? 'PM' : 'AM';
+  const h12 = h === 0 ? 12 : h > 12 ? h - 12 : h;
+  return `${h12}:${m.toString().padStart(2, '0')} ${ampm}`;
 }
 
 export function formatDate(dateStr: string): string {
@@ -19,6 +26,14 @@ export function formatDate(dateStr: string): string {
 export function formatDateShort(dateStr: string): string {
   const date = new Date(dateStr + 'T00:00:00');
   return date.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' });
+}
+
+export function formatTimestamp(isoString: string): string {
+  const date = new Date(isoString);
+  return date.toLocaleString([], {
+    month: 'short', day: 'numeric', year: 'numeric',
+    hour: 'numeric', minute: '2-digit', hour12: true,
+  });
 }
 
 export function getToday(): string {
@@ -54,6 +69,14 @@ export function minutesToTime(minutes: number): string {
   const h = Math.floor(minutes / 60) % 24;
   const m = minutes % 60;
   return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`;
+}
+
+export function generateFullDaySlots(): string[] {
+  const slots: string[] = [];
+  for (let m = 0; m < 24 * 60; m += 30) {
+    slots.push(minutesToTime(m));
+  }
+  return slots;
 }
 
 export function generateTimeSlots(start: string, end: string): string[] {

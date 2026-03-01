@@ -12,14 +12,16 @@ export function DashboardPage() {
   const [filterStatus, setFilterStatus] = useState<string>('active');
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    loadData();
-  }, [filterStatus, filterType]);
-
   const loadData = async () => {
+    setLoading(true);
     try {
+      const params: Record<string, string> = {};
+      if (filterStatus !== 'all') params.status = filterStatus;
+      else params.status = 'all';
+      if (filterType !== 'all') params.type = filterType;
+
       const [projectList, analyticsData] = await Promise.all([
-        projectsApi.list({ status: filterStatus, type: filterType !== 'all' ? filterType : undefined }),
+        projectsApi.list(params),
         analyticsApi.overview(),
       ]);
       setProjects(projectList);
@@ -31,6 +33,10 @@ export function DashboardPage() {
     }
   };
 
+  useEffect(() => {
+    loadData();
+  }, [filterStatus, filterType]);
+
   // Group by type
   const grouped = projects.reduce<Record<string, Project[]>>((acc, p) => {
     const type = p.projectType;
@@ -38,14 +44,6 @@ export function DashboardPage() {
     acc[type].push(p);
     return acc;
   }, {});
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="text-katsu-text-dim">Loading...</div>
-      </div>
-    );
-  }
 
   return (
     <div className="p-4 md:p-6 max-w-6xl mx-auto">
@@ -70,7 +68,7 @@ export function DashboardPage() {
         <select
           value={filterStatus}
           onChange={e => setFilterStatus(e.target.value)}
-          className="bg-katsu-surface border border-katsu-border rounded px-3 py-1.5 text-sm text-katsu-text"
+          className="bg-katsu-surface border border-katsu-border rounded px-3 py-1.5 text-sm text-katsu-text focus:outline-none"
         >
           <option value="active">Active</option>
           <option value="paused">Paused</option>
@@ -80,7 +78,7 @@ export function DashboardPage() {
         <select
           value={filterType}
           onChange={e => setFilterType(e.target.value)}
-          className="bg-katsu-surface border border-katsu-border rounded px-3 py-1.5 text-sm text-katsu-text"
+          className="bg-katsu-surface border border-katsu-border rounded px-3 py-1.5 text-sm text-katsu-text focus:outline-none"
         >
           <option value="all">All Types</option>
           {Object.entries(PROJECT_TYPE_NAMES).map(([slug, name]) => (
@@ -90,7 +88,11 @@ export function DashboardPage() {
       </div>
 
       {/* Project Grid */}
-      {Object.keys(grouped).length === 0 ? (
+      {loading ? (
+        <div className="flex items-center justify-center h-32">
+          <div className="text-katsu-text-dim">Loading...</div>
+        </div>
+      ) : Object.keys(grouped).length === 0 ? (
         <div className="text-center py-12">
           <FolderKanban size={40} className="mx-auto text-katsu-text-dim mb-3" />
           <p className="text-katsu-text-muted">No projects found</p>

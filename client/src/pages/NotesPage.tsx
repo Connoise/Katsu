@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { sessionNotesApi, projectsApi, tasksApi } from '../api/client';
 import { SessionNote, Project, Task, NoteType, PROJECT_TYPE_COLORS } from '../types';
-import { relativeTime } from '../utils/time';
-import { Plus, Filter, BookOpen, Lightbulb, AlertTriangle, CheckCircle, MessageSquare, X } from 'lucide-react';
+import { formatTimestamp } from '../utils/time';
+import { Plus, BookOpen, Lightbulb, AlertTriangle, CheckCircle, MessageSquare, X, Pencil, Save } from 'lucide-react';
 
 const NOTE_TYPE_CONFIG: Record<NoteType, { icon: any; label: string; color: string }> = {
   idea: { icon: Lightbulb, label: 'Idea', color: '#FACC15' },
@@ -23,6 +23,9 @@ export function NotesPage() {
   const [newType, setNewType] = useState<NoteType>('general');
   const [newProjectId, setNewProjectId] = useState('');
   const [newTaskId, setNewTaskId] = useState('');
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editContent, setEditContent] = useState('');
+  const [editType, setEditType] = useState<NoteType>('general');
   const [loading, setLoading] = useState(true);
 
   const loadData = async () => {
@@ -51,7 +54,6 @@ export function NotesPage() {
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newContent.trim() || !newProjectId) return;
-
     await sessionNotesApi.create({
       projectId: newProjectId,
       taskId: newTaskId || null,
@@ -65,6 +67,22 @@ export function NotesPage() {
 
   const handleDelete = async (id: string) => {
     await sessionNotesApi.delete(id);
+    loadData();
+  };
+
+  const startEditing = (note: SessionNote) => {
+    setEditingId(note.id);
+    setEditContent(note.content);
+    setEditType(note.noteType);
+  };
+
+  const handleSaveEdit = async () => {
+    if (!editingId || !editContent.trim()) return;
+    await sessionNotesApi.update(editingId, {
+      content: editContent.trim(),
+      noteType: editType,
+    });
+    setEditingId(null);
     loadData();
   };
 
@@ -89,7 +107,7 @@ export function NotesPage() {
         <select
           value={filterType}
           onChange={e => setFilterType(e.target.value)}
-          className="bg-katsu-surface border border-katsu-border rounded px-3 py-1.5 text-sm text-katsu-text"
+          className="bg-katsu-surface border border-katsu-border rounded px-3 py-1.5 text-sm text-katsu-text focus:outline-none"
         >
           <option value="all">All Types</option>
           {Object.entries(NOTE_TYPE_CONFIG).map(([key, { label }]) => (
@@ -99,7 +117,7 @@ export function NotesPage() {
         <select
           value={filterProject}
           onChange={e => setFilterProject(e.target.value)}
-          className="bg-katsu-surface border border-katsu-border rounded px-3 py-1.5 text-sm text-katsu-text"
+          className="bg-katsu-surface border border-katsu-border rounded px-3 py-1.5 text-sm text-katsu-text focus:outline-none"
         >
           <option value="all">All Projects</option>
           {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
@@ -128,9 +146,7 @@ export function NotesPage() {
           <div className="flex gap-1">
             {Object.entries(NOTE_TYPE_CONFIG).map(([key, { label, color }]) => (
               <button
-                key={key}
-                type="button"
-                onClick={() => setNewType(key as NoteType)}
+                key={key} type="button" onClick={() => setNewType(key as NoteType)}
                 className={`text-xs px-2 py-1 rounded border ${newType === key ? 'border-current' : 'border-katsu-border text-katsu-text-dim'}`}
                 style={newType === key ? { color, borderColor: color } : undefined}
               >
@@ -139,10 +155,7 @@ export function NotesPage() {
             ))}
           </div>
           <textarea
-            value={newContent}
-            onChange={e => setNewContent(e.target.value)}
-            rows={3}
-            required
+            value={newContent} onChange={e => setNewContent(e.target.value)} rows={3} required
             placeholder="Write your note... (supports markdown)"
             className="w-full bg-katsu-surface-2 border border-katsu-border rounded px-3 py-2 text-sm text-katsu-text focus:outline-none focus:border-katsu-accent resize-none"
           />
@@ -164,20 +177,59 @@ export function NotesPage() {
             const project = projects.find(p => p.id === note.projectId);
             const task = note.taskId ? tasks.find(t => t.id === note.taskId) : null;
             const projectColor = project ? (PROJECT_TYPE_COLORS[project.projectType] || '#9CA3AF') : '#9CA3AF';
+            const isEditing = editingId === note.id;
 
             return (
               <div key={note.id} className="bg-katsu-surface rounded-lg border border-katsu-border p-3">
                 <div className="flex items-start justify-between mb-1">
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 flex-wrap">
                     <Icon size={14} style={{ color: config.color }} />
                     <span className="text-xs" style={{ color: config.color }}>{config.label}</span>
-                    <span className="text-xs text-katsu-text-dim">{relativeTime(note.createdAt)}</span>
+                    <span className="text-xs text-katsu-text-dim">{formatTimestamp(note.createdAt)}</span>
+                    {note.updatedAt !== note.createdAt && (
+                      <span className="text-xs text-katsu-text-dim italic">(edited)</span>
+                    )}
                   </div>
-                  <button onClick={() => handleDelete(note.id)} className="text-xs text-katsu-text-dim hover:text-red-400">
-                    <X size={12} />
-                  </button>
+                  <div className="flex items-center gap-1">
+                    {!isEditing && (
+                      <button onClick={() => startEditing(note)} className="text-xs text-katsu-text-dim hover:text-katsu-text p-0.5">
+                        <Pencil size={12} />
+                      </button>
+                    )}
+                    <button onClick={() => handleDelete(note.id)} className="text-xs text-katsu-text-dim hover:text-red-400 p-0.5">
+                      <X size={12} />
+                    </button>
+                  </div>
                 </div>
-                <p className="text-sm text-katsu-text whitespace-pre-wrap">{note.content}</p>
+
+                {isEditing ? (
+                  <div className="space-y-2 mt-2">
+                    <div className="flex gap-1">
+                      {Object.entries(NOTE_TYPE_CONFIG).map(([key, { label, color }]) => (
+                        <button
+                          key={key} type="button" onClick={() => setEditType(key as NoteType)}
+                          className={`text-xs px-2 py-0.5 rounded border ${editType === key ? 'border-current' : 'border-katsu-border text-katsu-text-dim'}`}
+                          style={editType === key ? { color, borderColor: color } : undefined}
+                        >
+                          {label}
+                        </button>
+                      ))}
+                    </div>
+                    <textarea
+                      value={editContent} onChange={e => setEditContent(e.target.value)} rows={3}
+                      className="w-full bg-katsu-surface-2 border border-katsu-border rounded px-3 py-2 text-sm text-katsu-text focus:outline-none focus:border-katsu-accent resize-none"
+                    />
+                    <div className="flex gap-2">
+                      <button onClick={handleSaveEdit} className="text-xs px-3 py-1 bg-katsu-accent text-black rounded hover:bg-katsu-accent-hover flex items-center gap-1">
+                        <Save size={12} /> Save
+                      </button>
+                      <button onClick={() => setEditingId(null)} className="text-xs px-3 py-1 text-katsu-text-muted">Cancel</button>
+                    </div>
+                  </div>
+                ) : (
+                  <p className="text-sm text-katsu-text whitespace-pre-wrap">{note.content}</p>
+                )}
+
                 <div className="flex items-center gap-2 mt-2">
                   {project && (
                     <span className="text-xs px-1.5 py-0.5 rounded" style={{ backgroundColor: projectColor + '20', color: projectColor }}>
