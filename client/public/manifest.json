@@ -1,0 +1,17 @@
+{
+  "name": "Katsu — Creative Project Manager",
+  "short_name": "Katsu",
+  "description": "Personal creative project management app with scheduling, focus sessions, and accountability tracking.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0f0f0f",
+  "theme_color": "#FACC15",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "/katsu.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}

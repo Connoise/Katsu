@@ -1,0 +1,16 @@
+version: '3.8'
+
+services:
+  katsu:
+    build: .
+    container_name: katsu
+    ports:
+      - "3000:3000"
+    volumes:
+      - katsu-data:/app/data
+    env_file:
+      - .env
+    restart: unless-stopped
+
+volumes:
+  katsu-data:
