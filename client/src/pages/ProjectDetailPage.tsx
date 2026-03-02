@@ -1,11 +1,14 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
-import { projectsApi, analyticsApi } from '../api/client';
+import { useParams, useNavigate } from 'react-router-dom';
+import { projectsApi, analyticsApi, archiveApi } from '../api/client';
 import { Project, ProjectAnalytics, PROJECT_TYPE_COLORS, PROJECT_TYPE_NAMES, PRIORITY_COLORS } from '../types';
 import { ProjectForm } from '../components/projects/ProjectForm';
 import { TaskList } from '../components/tasks/TaskList';
-import { formatMinutes, formatDate, relativeTime } from '../utils/time';
-import { ArrowLeft, Pencil, Trash2, Archive, Timer, TrendingUp, Clock, Target, X } from 'lucide-react';
+import { formatMinutes, formatDate } from '../utils/time';
+import {
+  ArrowLeft, Pencil, Trash2, Archive, Timer, TrendingUp, Clock, Target, X,
+  CheckCircle, Pause, Play, PackageOpen
+} from 'lucide-react';
 
 export function ProjectDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -13,6 +16,9 @@ export function ProjectDetailPage() {
   const [project, setProject] = useState<Project | null>(null);
   const [analytics, setAnalytics] = useState<ProjectAnalytics | null>(null);
   const [editing, setEditing] = useState(false);
+  const [showArchive, setShowArchive] = useState(false);
+  const [archiveReason, setArchiveReason] = useState<'complete' | 'shelved' | 'abandoned'>('complete');
+  const [archiveNotes, setArchiveNotes] = useState('');
   const [loading, setLoading] = useState(true);
 
   const loadProject = async () => {
@@ -46,6 +52,32 @@ export function ProjectDetailPage() {
     navigate('/projects');
   };
 
+  const handleComplete = async () => {
+    if (!id) return;
+    await projectsApi.update(id, { status: 'complete' });
+    loadProject();
+  };
+
+  const handleTogglePause = async () => {
+    if (!id || !project) return;
+    const newStatus = project.status === 'paused' ? 'active' : 'paused';
+    await projectsApi.update(id, { status: newStatus });
+    loadProject();
+  };
+
+  const handleReactivate = async () => {
+    if (!id) return;
+    await projectsApi.update(id, { status: 'active' });
+    loadProject();
+  };
+
+  const handleArchive = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!id) return;
+    await archiveApi.archive(id, { reason: archiveReason, notes: archiveNotes || undefined });
+    navigate('/archive');
+  };
+
   if (loading || !project) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -59,6 +91,11 @@ export function ProjectDetailPage() {
 
   const paceEmoji = analytics?.pace === 'ahead' ? '🟢' : analytics?.pace === 'behind' ? '🔴' : '🟡';
   const paceLabel = analytics?.pace === 'ahead' ? 'Ahead' : analytics?.pace === 'behind' ? 'Behind' : 'On Track';
+
+  const isActive = project.status === 'active';
+  const isPaused = project.status === 'paused';
+  const isComplete = project.status === 'complete';
+  const isArchived = project.status === 'shelved' || project.status === 'abandoned';
 
   return (
     <div className="max-w-3xl mx-auto p-4 md:p-6">
@@ -79,7 +116,12 @@ export function ProjectDetailPage() {
               >
                 {project.priority}
               </span>
-              <span className="text-xs px-2 py-0.5 rounded-full bg-katsu-surface-3 text-katsu-text-dim capitalize">
+              <span className={`text-xs px-2 py-0.5 rounded-full capitalize ${
+                isComplete ? 'bg-green-500/20 text-green-400' :
+                isPaused ? 'bg-yellow-500/20 text-yellow-400' :
+                isArchived ? 'bg-red-500/20 text-red-400' :
+                'bg-katsu-surface-3 text-katsu-text-dim'
+              }`}>
                 {project.status}
               </span>
             </div>
@@ -146,6 +188,63 @@ export function ProjectDetailPage() {
               <span key={tag} className="text-xs bg-katsu-surface-3 text-katsu-text-dim px-2 py-0.5 rounded">{tag}</span>
             ))}
           </div>
+        )}
+
+        {/* Action buttons */}
+        <div className="flex flex-wrap gap-2 mt-4 pt-3 border-t border-katsu-border">
+          {(isActive || isPaused) && (
+            <button onClick={handleComplete}
+              className="flex items-center gap-1.5 text-xs px-3 py-1.5 bg-green-500/10 text-green-400 rounded hover:bg-green-500/20 transition-colors">
+              <CheckCircle size={14} /> Mark Complete
+            </button>
+          )}
+
+          {(isActive || isPaused) && (
+            <button onClick={handleTogglePause}
+              className="flex items-center gap-1.5 text-xs px-3 py-1.5 bg-yellow-500/10 text-yellow-400 rounded hover:bg-yellow-500/20 transition-colors">
+              {isPaused ? <><Play size={14} /> Resume</> : <><Pause size={14} /> Pause</>}
+            </button>
+          )}
+
+          {(isComplete || isArchived) && (
+            <button onClick={handleReactivate}
+              className="flex items-center gap-1.5 text-xs px-3 py-1.5 bg-blue-500/10 text-blue-400 rounded hover:bg-blue-500/20 transition-colors">
+              <Play size={14} /> Reactivate
+            </button>
+          )}
+
+          {!isArchived && (
+            <button onClick={() => setShowArchive(!showArchive)}
+              className="flex items-center gap-1.5 text-xs px-3 py-1.5 bg-katsu-surface-3 text-katsu-text-muted rounded hover:text-katsu-text transition-colors">
+              {showArchive ? <><X size={14} /> Cancel</> : <><Archive size={14} /> Archive</>}
+            </button>
+          )}
+        </div>
+
+        {/* Archive form */}
+        {showArchive && (
+          <form onSubmit={handleArchive} className="mt-3 bg-katsu-surface-2 rounded border border-katsu-border p-3 space-y-2">
+            <h3 className="text-xs font-medium text-katsu-text">Archive Project</h3>
+            <p className="text-xs text-katsu-text-dim">This will snapshot the project and move it to the archive.</p>
+            <div>
+              <label className="block text-xs text-katsu-text-dim mb-0.5">Reason</label>
+              <select value={archiveReason} onChange={e => setArchiveReason(e.target.value as any)}
+                className="w-full bg-katsu-surface border border-katsu-border rounded px-2 py-1.5 text-xs text-katsu-text">
+                <option value="complete">Completed</option>
+                <option value="shelved">Shelved</option>
+                <option value="abandoned">Abandoned</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs text-katsu-text-dim mb-0.5">Notes (optional)</label>
+              <textarea value={archiveNotes} onChange={e => setArchiveNotes(e.target.value)} rows={2}
+                placeholder="Any final notes..."
+                className="w-full bg-katsu-surface border border-katsu-border rounded px-2 py-1.5 text-xs text-katsu-text resize-none focus:outline-none focus:border-katsu-accent" />
+            </div>
+            <button type="submit" className="text-xs px-4 py-1.5 bg-katsu-accent text-black rounded font-medium hover:bg-katsu-accent-hover">
+              Archive Project
+            </button>
+          </form>
         )}
       </div>
 

@@ -14,6 +14,7 @@ import focusSessionsRouter from './routes/focus-sessions.js';
 import sessionNotesRouter from './routes/session-notes.js';
 import analyticsRouter from './routes/analytics.js';
 import templatesRouter from './routes/templates.js';
+import scheduleTemplatesRouter from './routes/schedule-templates.js';
 import archiveRouter from './routes/archive.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -37,6 +38,7 @@ app.use('/api/focus-sessions', focusSessionsRouter);
 app.use('/api/session-notes', sessionNotesRouter);
 app.use('/api/analytics', analyticsRouter);
 app.use('/api/templates', templatesRouter);
+app.use('/api/schedule-templates', scheduleTemplatesRouter);
 app.use('/api/archive', archiveRouter);
 
 // Serve static frontend in production

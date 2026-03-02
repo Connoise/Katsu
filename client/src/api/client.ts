@@ -114,6 +114,16 @@ export const templatesApi = {
   delete: (id: string) => request<any>(`/templates/${id}`, { method: 'DELETE' }),
 };
 
+// ─── Schedule Templates (day schedule templates) ────────────────
+export const scheduleTemplatesApi = {
+  list: () => request<any[]>('/schedule-templates'),
+  get: (id: string) => request<any>(`/schedule-templates/${id}`),
+  create: (data: any) => request<any>('/schedule-templates', { method: 'POST', body: JSON.stringify(data) }),
+  apply: (id: string, data: { date: string }) => request<any>(`/schedule-templates/${id}/apply`, { method: 'POST', body: JSON.stringify(data) }),
+  fromDay: (dayId: string, data: { name: string }) => request<any>(`/schedule-templates/from-day/${dayId}`, { method: 'POST', body: JSON.stringify(data) }),
+  delete: (id: string) => request<any>(`/schedule-templates/${id}`, { method: 'DELETE' }),
+};
+
 // ─── Archive ────────────────────────────────────────────────────
 export const archiveApi = {
   list: () => request<any[]>('/archive'),

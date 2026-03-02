@@ -177,6 +177,25 @@ export const templateTasks = sqliteTable('template_tasks', {
   notes: text('notes'),
 });
 
+// ─── Schedule Templates ───────────────────────────────────────
+export const scheduleTemplates = sqliteTable('schedule_templates', {
+  id: text('id').primaryKey(),
+  name: text('name').notNull(),
+  description: text('description'),
+  dayType: text('day_type', { enum: ['workday', 'weekend', 'day_off', 'show_day'] }).notNull().default('workday'),
+  createdAt: text('created_at').default(sql`(datetime('now'))`),
+  updatedAt: text('updated_at').default(sql`(datetime('now'))`),
+});
+
+export const scheduleTemplateBlocks = sqliteTable('schedule_template_blocks', {
+  id: text('id').primaryKey(),
+  templateId: text('template_id').notNull().references(() => scheduleTemplates.id, { onDelete: 'cascade' }),
+  label: text('label').notNull(),
+  blockType: text('block_type', { enum: ['task', 'fixed', 'break', 'buffer'] }).notNull().default('fixed'),
+  startTime: text('start_time').notNull(),
+  endTime: text('end_time').notNull(),
+});
+
 // ─── Calendar Sync ─────────────────────────────────────────────
 export const calendarSync = sqliteTable('calendar_sync', {
   id: text('id').primaryKey(),
