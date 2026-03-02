@@ -91,6 +91,18 @@ export function generateTimeSlots(start: string, end: string): string[] {
   return slots;
 }
 
+export function slotSpan(startTime: string, endTime: string): number {
+  const start = timeToMinutes(startTime);
+  let end = timeToMinutes(endTime);
+  if (end <= start) end += 24 * 60;
+  return Math.max(Math.ceil((end - start) / 30), 1);
+}
+
+export function addMinutesToSlot(slot: string, minutes: number): string {
+  const total = timeToMinutes(slot) + minutes;
+  return minutesToTime(total % (24 * 60));
+}
+
 export function relativeTime(dateStr: string): string {
   const now = new Date();
   const date = new Date(dateStr);
