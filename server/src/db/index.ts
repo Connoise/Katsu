@@ -34,6 +34,7 @@ export function initializeDatabase() {
       slug TEXT NOT NULL,
       description TEXT,
       project_type TEXT NOT NULL,
+      color TEXT,
       status TEXT NOT NULL DEFAULT 'active',
       priority TEXT NOT NULL DEFAULT 'medium',
       created_at TEXT DEFAULT (datetime('now')),
@@ -202,6 +203,24 @@ export function initializeDatabase() {
       end_time TEXT NOT NULL
     );
 
+    CREATE TABLE IF NOT EXISTS work_intervals (
+      id TEXT PRIMARY KEY,
+      task_id TEXT NOT NULL REFERENCES tasks(id) ON DELETE CASCADE,
+      project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+      focus_session_id TEXT REFERENCES focus_sessions(id) ON DELETE SET NULL,
+      started_at TEXT NOT NULL,
+      ended_at TEXT,
+      duration_minutes INTEGER,
+      notes TEXT,
+      created_at TEXT DEFAULT (datetime('now'))
+    );
+
+    CREATE TABLE IF NOT EXISTS app_settings (
+      key TEXT PRIMARY KEY,
+      value TEXT NOT NULL,
+      updated_at TEXT DEFAULT (datetime('now'))
+    );
+
     CREATE TABLE IF NOT EXISTS calendar_sync (
       id TEXT PRIMARY KEY,
       google_calendar_id TEXT,
@@ -223,7 +242,13 @@ export function initializeDatabase() {
     );
   `);
 
+  // Add color column to projects if it doesn't exist (migration for existing DBs)
+  try {
+    sqlite.exec(`ALTER TABLE projects ADD COLUMN color TEXT`);
+  } catch { /* column already exists */ }
+
   seedDefaultProjectTypes();
+  seedDefaultSettings();
 }
 
 function seedDefaultProjectTypes() {
@@ -248,4 +273,17 @@ function seedDefaultProjectTypes() {
   for (const pt of defaults) {
     insert.run(pt.id, pt.name, pt.slug, pt.color);
   }
+}
+
+function seedDefaultSettings() {
+  const upsert = sqlite.prepare(
+    `INSERT OR IGNORE INTO app_settings (key, value) VALUES (?, ?)`
+  );
+  upsert.run('telegram_bot_token', '');
+  upsert.run('telegram_chat_id', '');
+  upsert.run('notify_block_start', 'true');
+  upsert.run('notify_block_overdue', 'true');
+  upsert.run('notify_focus_reminder', 'true');
+  upsert.run('do_not_disturb', 'false');
+  upsert.run('app_password', '');
 }

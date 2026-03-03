@@ -94,7 +94,7 @@ router.get('/:id', async (req: Request, res: Response) => {
 // POST /api/projects
 router.post('/', async (req: Request, res: Response) => {
   try {
-    const { name, description, projectType, status, priority, targetDeadline, tags, notes } = req.body;
+    const { name, description, projectType, color, status, priority, targetDeadline, tags, notes } = req.body;
     const id = uuid();
     const slug = slugify(name);
 
@@ -104,6 +104,7 @@ router.post('/', async (req: Request, res: Response) => {
       slug,
       description: description || null,
       projectType,
+      color: color || null,
       status: status || 'active',
       priority: priority || 'medium',
       targetDeadline: targetDeadline || null,
@@ -121,12 +122,13 @@ router.post('/', async (req: Request, res: Response) => {
 // PUT /api/projects/:id
 router.put('/:id', async (req: Request, res: Response) => {
   try {
-    const { name, description, projectType, status, priority, targetDeadline, tags, notes } = req.body;
+    const { name, description, projectType, color, status, priority, targetDeadline, tags, notes } = req.body;
     const updates: Record<string, any> = { updatedAt: new Date().toISOString() };
 
     if (name !== undefined) { updates.name = name; updates.slug = slugify(name); }
     if (description !== undefined) updates.description = description;
     if (projectType !== undefined) updates.projectType = projectType;
+    if (color !== undefined) updates.color = color;
     if (status !== undefined) updates.status = status;
     if (priority !== undefined) updates.priority = priority;
     if (targetDeadline !== undefined) updates.targetDeadline = targetDeadline;

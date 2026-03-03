@@ -20,7 +20,6 @@ const statusLabels: Record<TaskStatus, string> = {
   complete: 'Complete',
   partial: 'Partial',
   skipped: 'Skipped',
-  overdue: 'Overdue',
 };
 
 export function TaskList({ tasks, projectId, onUpdate, onStartFocus }: TaskListProps) {
@@ -88,7 +87,6 @@ export function TaskList({ tasks, projectId, onUpdate, onStartFocus }: TaskListP
       case 'complete': return 'pending';
       case 'partial': return 'in_progress';
       case 'skipped': return 'pending';
-      case 'overdue': return 'in_progress';
       default: return 'pending';
     }
   };

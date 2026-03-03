@@ -8,7 +8,7 @@ export interface ProjectType {
 
 export type ProjectStatus = 'active' | 'paused' | 'complete' | 'shelved' | 'abandoned';
 export type Priority = 'low' | 'medium' | 'high' | 'urgent';
-export type TaskStatus = 'pending' | 'in_progress' | 'complete' | 'partial' | 'skipped' | 'overdue';
+export type TaskStatus = 'pending' | 'in_progress' | 'complete' | 'partial' | 'skipped';
 export type BlockType = 'task' | 'fixed' | 'break' | 'buffer';
 export type BlockStatus = 'empty' | 'assigned' | 'done' | 'skipped';
 export type DayType = 'workday' | 'weekend' | 'day_off' | 'show_day';
@@ -22,6 +22,7 @@ export interface Project {
   slug: string;
   description: string | null;
   projectType: string;
+  color: string | null;
   status: ProjectStatus;
   priority: Priority;
   createdAt: string;
@@ -158,6 +159,9 @@ export interface AnalyticsOverview {
   totalActualMinutes: number;
   estimationAccuracy: number;
   streak: number;
+  consistencyScore?: number;
+  productiveHoursToday?: number;
+  projectsCompletedThisYear?: number;
 }
 
 export interface ProjectAnalytics {
@@ -173,6 +177,11 @@ export interface ProjectAnalytics {
   actualToDateMinutes: number;
   pace: 'ahead' | 'on_track' | 'behind';
   totalFocusMinutes: number;
+}
+
+// Helper to get a project's display color (per-project color > type default)
+export function getProjectColor(project: { color?: string | null; projectType: string }): string {
+  return project.color || PROJECT_TYPE_COLORS[project.projectType] || '#9CA3AF';
 }
 
 export const PROJECT_TYPE_COLORS: Record<string, string> = {
@@ -212,5 +221,10 @@ export const STATUS_COLORS: Record<TaskStatus, string> = {
   complete: '#10B981',
   partial: '#F59E0B',
   skipped: '#9CA3AF',
-  overdue: '#EF4444',
 };
+
+export const COLOR_PRESETS = [
+  '#FACC15', '#F59E0B', '#EF4444', '#EC4899', '#A855F7',
+  '#3B82F6', '#06B6D4', '#10B981', '#84CC16', '#64748B',
+  '#F97316', '#8B5CF6', '#14B8A6', '#E11D48', '#9CA3AF',
+];

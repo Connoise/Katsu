@@ -1,7 +1,7 @@
 import { NavLink } from 'react-router-dom';
 import {
-  LayoutDashboard, FolderKanban, CalendarDays, BarChart3,
-  Timer, BookOpen, Archive, Layout, Clock
+  LayoutDashboard, FolderKanban, CalendarDays,
+  Timer, BookOpen, Layout, Clock, Settings
 } from 'lucide-react';
 import { cn } from '../../utils/cn';
 
@@ -12,9 +12,7 @@ const navItems = [
   { to: '/calendar', icon: CalendarDays, label: 'Calendar' },
   { to: '/focus', icon: Timer, label: 'Focus' },
   { to: '/notes', icon: BookOpen, label: 'Notes' },
-  { to: '/analytics', icon: BarChart3, label: 'Analytics' },
   { to: '/templates', icon: Layout, label: 'Templates' },
-  { to: '/archive', icon: Archive, label: 'Archive' },
 ];
 
 export function Sidebar() {
@@ -44,6 +42,22 @@ export function Sidebar() {
           </NavLink>
         ))}
       </nav>
+      <div className="border-t border-katsu-border">
+        <NavLink
+          to="/settings"
+          className={({ isActive }) =>
+            cn(
+              'flex items-center gap-3 px-4 py-3 text-sm transition-colors',
+              isActive
+                ? 'bg-katsu-surface-2 text-katsu-accent'
+                : 'text-katsu-text-muted hover:text-katsu-text hover:bg-katsu-surface-2'
+            )
+          }
+        >
+          <Settings size={18} />
+          <span>Settings</span>
+        </NavLink>
+      </div>
     </aside>
   );
 }
