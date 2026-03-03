@@ -1,12 +1,13 @@
 import { NavLink } from 'react-router-dom';
-import { Clock, FolderKanban, CalendarDays, BarChart3 } from 'lucide-react';
+import { Clock, FolderKanban, CalendarDays, LayoutDashboard, Settings } from 'lucide-react';
 import { cn } from '../../utils/cn';
 
 const mobileNavItems = [
   { to: '/', icon: Clock, label: 'Today' },
-  { to: '/projects', icon: FolderKanban, label: 'Projects' },
+  { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
   { to: '/calendar', icon: CalendarDays, label: 'Calendar' },
-  { to: '/analytics', icon: BarChart3, label: 'Analytics' },
+  { to: '/projects', icon: FolderKanban, label: 'Projects' },
+  { to: '/settings', icon: Settings, label: 'Settings' },
 ];
 
 export function BottomNav() {

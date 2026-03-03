@@ -18,6 +18,7 @@ export const projects = sqliteTable('projects', {
   slug: text('slug').notNull(),
   description: text('description'),
   projectType: text('project_type').notNull(),
+  color: text('color'),
   status: text('status', { enum: ['active', 'paused', 'complete', 'shelved', 'abandoned'] }).notNull().default('active'),
   priority: text('priority', { enum: ['low', 'medium', 'high', 'urgent'] }).notNull().default('medium'),
   createdAt: text('created_at').default(sql`(datetime('now'))`),
@@ -37,7 +38,7 @@ export const tasks = sqliteTable('tasks', {
   templateTaskId: text('template_task_id'),
   name: text('name').notNull(),
   description: text('description'),
-  status: text('status', { enum: ['pending', 'in_progress', 'complete', 'partial', 'skipped', 'overdue'] }).notNull().default('pending'),
+  status: text('status', { enum: ['pending', 'in_progress', 'complete', 'partial', 'skipped'] }).notNull().default('pending'),
   order: integer('order').notNull().default(0),
   scheduledStart: text('scheduled_start'),
   scheduledEnd: text('scheduled_end'),
@@ -175,6 +176,26 @@ export const templateTasks = sqliteTable('template_tasks', {
   isMilestone: integer('is_milestone', { mode: 'boolean' }).default(false),
   dependsOnOrder: text('depends_on_order').default('[]'),
   notes: text('notes'),
+});
+
+// ─── Work Intervals ───────────────────────────────────────────
+export const workIntervals = sqliteTable('work_intervals', {
+  id: text('id').primaryKey(),
+  taskId: text('task_id').notNull().references(() => tasks.id, { onDelete: 'cascade' }),
+  projectId: text('project_id').notNull().references(() => projects.id, { onDelete: 'cascade' }),
+  focusSessionId: text('focus_session_id').references(() => focusSessions.id, { onDelete: 'set null' }),
+  startedAt: text('started_at').notNull(),
+  endedAt: text('ended_at'),
+  durationMinutes: integer('duration_minutes'),
+  notes: text('notes'),
+  createdAt: text('created_at').default(sql`(datetime('now'))`),
+});
+
+// ─── App Settings ─────────────────────────────────────────────
+export const appSettings = sqliteTable('app_settings', {
+  key: text('key').primaryKey(),
+  value: text('value').notNull(),
+  updatedAt: text('updated_at').default(sql`(datetime('now'))`),
 });
 
 // ─── Schedule Templates ───────────────────────────────────────
